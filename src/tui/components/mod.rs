@@ -3,7 +3,7 @@ use crossterm::event::{KeyEvent, MouseEvent};
 use ratatui::layout::Rect;
 use tokio::sync::mpsc::UnboundedSender;
 
-use super::{Action, Event, Frame};
+use super::{Action, Event, Frame, Message};
 
 pub use base::Base;
 use other::Other;
@@ -13,7 +13,13 @@ mod other;
 
 pub trait Component {
     #[allow(unused_variables)]
-    fn init(&mut self, tx: UnboundedSender<Action>) -> Result<()>;
+    fn init(
+        &mut self,
+        tx: UnboundedSender<Action>,
+        message_tx: Option<UnboundedSender<Message>>,
+    ) -> Result<()> {
+        Ok(())
+    }
 
     fn handle_events(&mut self, event: Option<Event>) -> Action {
         match event {

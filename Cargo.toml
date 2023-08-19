@@ -1,5 +1,5 @@
 [package]
-name = "shado-tui-template"
+name = "shadotui-template"
 version = "0.1.0"
 edition = "2021"
 authors = ["Shadorain"]
@@ -39,7 +39,3 @@ signal-hook = "0.3.15"
 codegen-units = 1
 lto = true
 strip = true
-
-[[bin]]
-name = "shado-tui-template"
-path = "src/main.rs"

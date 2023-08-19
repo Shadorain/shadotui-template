@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Action {
     Quit,
     Resume,
@@ -11,6 +11,7 @@ pub enum Action {
     ScheduleDecrement,
     Increment(usize),
     Decrement(usize),
+    CompleteInput(String),
     EnterNormal,
     EnterInsert,
     EnterProcessing,

@@ -2,13 +2,17 @@ use anyhow::Result;
 use ratatui::{prelude::*, widgets::*};
 use tokio::sync::mpsc::UnboundedSender;
 
-use super::{Action, Component, Frame};
+use super::{Action, Component, Frame, Message};
 
 #[derive(Default)]
 pub struct Other {}
 
 impl Component for Other {
-    fn init(&mut self, _: UnboundedSender<Action>) -> Result<()> {
+    fn init(
+        &mut self,
+        _: UnboundedSender<Action>,
+        _message_tx: Option<UnboundedSender<Message>>,
+    ) -> Result<()> {
         Ok(())
     }
 

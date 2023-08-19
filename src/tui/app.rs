@@ -5,7 +5,7 @@ use tokio::sync::{mpsc, Mutex};
 
 use super::{
     components::{Base, Component},
-    Action, EventHandler, TerminalHandler,
+    Action, EventHandler, TerminalHandler, Message,
 };
 
 pub struct App {
@@ -27,10 +27,10 @@ impl App {
         })
     }
 
-    pub async fn run(&mut self) -> Result<()> {
+    pub async fn run(&mut self, message_tx: Option<mpsc::UnboundedSender<Message>>) -> Result<()> {
         let (action_tx, mut action_rx) = mpsc::unbounded_channel();
 
-        self.base.lock().await.init(action_tx.clone())?;
+        self.base.lock().await.init(action_tx.clone(), message_tx.clone())?;
 
         let mut terminal = TerminalHandler::new(self.base.clone());
         let mut event = EventHandler::new(self.tick_rate, self.base.clone(), action_tx.clone());
@@ -59,6 +59,9 @@ impl App {
                 action_tx.send(Action::Resume)?;
                 action_tx.send(Action::RenderTick)?;
             } else if self.should_quit {
+                if let Some(tx) = message_tx {
+                    tx.send(Message::Quit).unwrap();
+                }
                 terminal.stop()?;
                 event.stop();
                 terminal.task.await?;

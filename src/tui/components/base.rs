@@ -1,11 +1,11 @@
 use std::time::Duration;
 
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{prelude::*, widgets::*};
 use tokio::sync::mpsc::{self, UnboundedSender};
 use tui_input::{backend::crossterm::EventHandler, Input};
 
-use super::{Action, Component, Frame, Other};
+use super::{Action, Component, Frame, Message, Other};
 
 #[derive(Default, Copy, Clone, PartialEq, Eq)]
 enum Mode {
@@ -26,6 +26,7 @@ pub struct Base {
     show_other: bool,
 
     action_tx: Option<mpsc::UnboundedSender<Action>>,
+    message_tx: Option<mpsc::UnboundedSender<Message>>,
 }
 
 impl Base {
@@ -67,8 +68,15 @@ impl Base {
 }
 
 impl Component for Base {
-    fn init(&mut self, tx: UnboundedSender<Action>) -> anyhow::Result<()> {
-        self.action_tx = Some(tx);
+    fn init(
+        &mut self,
+        tx: UnboundedSender<Action>,
+        message_tx: Option<mpsc::UnboundedSender<Message>>,
+    ) -> anyhow::Result<()> {
+        self.action_tx = Some(tx.clone());
+        self.message_tx = message_tx.clone();
+
+        self.other.init(tx, message_tx)?;
         Ok(())
     }
 
@@ -89,9 +97,9 @@ impl Component for Base {
             },
             Mode::Insert => match key.code {
                 KeyCode::Esc => Action::EnterNormal,
-                KeyCode::Enter => Action::EnterNormal,
+                KeyCode::Enter => Action::CompleteInput(self.input.to_string()),
                 _ => {
-                    self.input.handle_event(&crossterm::event::Event::Key(key));
+                    self.input.handle_event(&Event::Key(key));
                     Action::Update
                 }
             },
@@ -108,6 +116,12 @@ impl Component for Base {
             Action::Decrement(i) => self.decrement(i),
             Action::EnterNormal => {
                 self.mode = Mode::Normal;
+            }
+            Action::CompleteInput(s) => {
+                if let Some(tx) = &self.message_tx {
+                    tx.send(Message::HelloWorld(s)).unwrap();
+                }
+                return Some(Action::EnterNormal);
             }
             Action::EnterInsert => {
                 self.mode = Mode::Insert;
